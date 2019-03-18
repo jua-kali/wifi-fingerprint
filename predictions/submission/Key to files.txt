@@ -1,0 +1,4 @@
+1 - RF autotune rand 3
+2 - RF autotune rand 9
+3 - tough manual xgboost
+4 - pink xgb mess
