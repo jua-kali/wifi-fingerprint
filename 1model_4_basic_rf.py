@@ -91,12 +91,12 @@ def mae_report(model, is_search, X_test, y_test, X_test2, y_test2):
     
     mae = dict(test_mae = mean_absolute_error(model.predict(X_test), y_test),
                test2_mae = mean_absolute_error(model.predict(X_test2), y_test2)
-               )
-             
+               )      
     pprint(mae)
+
 # Load data -------------------------------------------------------
 
-df_all = pd.read_csv('data/processed/df.csv')
+df_all = pd.read_csv('data/preprocessed/df.csv')
 df_tr = df_all[df_all['dataset'] == 'train']
 df_val = df_all[df_all['dataset'] == 'val']
 df_test = df_all[df_all['dataset'] == 'test']
