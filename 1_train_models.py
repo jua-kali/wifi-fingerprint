@@ -18,7 +18,7 @@ Created on June 06 2019
 
 RANDOM_SEED = 42                   # Set random seed
 CORES = 3                  # Number of computer cores to use
-
+TEST_SIZE = .25
 
 # Setup --------------------------------------------------------------------
 
@@ -28,6 +28,9 @@ import custom_functions as cf
 # Import standard libraries
 import pandas as pd
 import numpy as np
+
+from plotly.offline import plot
+import plotly.graph_objs as go
 
 from pprint import pprint
 import time
@@ -41,19 +44,76 @@ from sklearn.externals import joblib
 
 
 waps_all = pd.read_csv('data/preprocessed/all_waps.csv')
-waps_train = waps_all[waps_all['dataset'] == 'train']
-waps_val = waps_all[waps_all['dataset'] == 'val']
-waps_test = waps_all[waps_all['dataset'] == 'test']
+waps_fixed = waps_all[waps_all['location_method'] == 'fixed']
+waps_random = waps_all[waps_all['location_method'] == 'random']
+
+
 
 wap_names = [col for col in waps_all if col.startswith('WAP')]
 
 
 
 ''' Setup test/train sampled datasets -----------------------------------------
-I experimented with two strategies: 
-'5_1_fixed_rand'     5-to-1 ratio  of data from the fixed and random data sets 
-'20_1_fixed_rand'   20-to-1 ratio (all available data) from fixed/random data sets  
+It's important to sample data from each floor and building for the test and 
+train sets.  Otherwise, random splits might leave us with a lot of data from
+one floor/building, and none from another.
 '''
 
-test, train, train_final = cf.test_train('20_1_fixed_rand', 
-                                      rand, waps_val, waps_train, waps_all)
+# Select test sample with 390 observations from each floor, building 
+# This is roughly 25% of the fixed location data
+waps_fixed_test = (waps_fixed.groupby(['BUILDINGID', 'FLOOR'])
+                   .apply(lambda x: x.sample(n = 390, random_state = RANDOM_SEED))
+                   .droplevel(level = ['BUILDINGID', 'FLOOR'])
+                   )
+
+# Select test sample with 21 observations from each floor, building 
+# This is roughly 25% of the random location data
+waps_random_test = (waps_random.groupby(['BUILDINGID', 'FLOOR'])
+            .apply(lambda x: x.sample(n=21, random_state = RANDOM_SEED))
+            .droplevel(level = ['BUILDINGID', 'FLOOR'])
+           )
+
+# Combine both datasets into the test set
+test = pd.concat([waps_fixed_test, waps_random_test])
+
+# The train set is all the data not in the test set
+train = waps_all.drop(test.index)
+
+# Plot to check spacing of test/train
+#trace0 = go.Scatter3d(
+#        x=train['LONGITUDE'], 
+#        y=train['LATITUDE'],
+#        z=train['FLOOR'],
+#        mode='markers',
+#        name = 'Train'
+#        )
+#
+#trace1 = go.Scatter3d(
+#        x=test['LONGITUDE'], 
+#        y=test['LATITUDE'],
+#        z=test['FLOOR'] +,
+#        mode='markers',
+#        name = 'Test'
+#        )
+#
+#data = [trace0, trace1]
+#plot(data)
+
+
+X_train = train[wap_names]
+X_test = test[wap_names]
+
+# %% Predict Building ---------------------------------------------------------
+
+y_train = train['BUILDINGID']
+y_test = test['BUILDINGID']
+
+
+rf_classifier = RandomForestClassifier(n_estimators=200)
+rf_classifier.fit(X_train, y_train)
+y_pred = rf_classifier.predict(X_test)
+
+rf_classifier.score(X_test, y_test)
+cohen_kappa_score(y_pred, y_test),
+
+

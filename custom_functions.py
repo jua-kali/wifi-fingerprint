@@ -66,14 +66,14 @@ def rfc_pred(X_test, y_test, model):
     print('Kappa:', cohen_kappa_score(clfpred, y_test))
 
 # Set up y for each target - Floor, Latitude, Longitude
-def set_y(target, train, test, test_val, train_final):
-    y_train = train[target]   
-    y_test = test[target]
+# def set_y(target, train, test, test_val, train_final):
+#    y_train = train[target]   
+#    y_test = test[target]
 
-    # A more difficult test
-    y_test2 = test_val[target]
-    y_train_final = train_final[target]
-    return(y_train, y_test, y_test2, y_train_final)
+#    # A more difficult test
+#    y_test2 = test_val[target]
+#    y_train_final = train_final[target]
+#    return(y_train, y_test, y_test2, y_train_final)
     
 # Define an accuracy report for Random Forest classification models
 def acc_report(model, tag, is_search, X_test, y_test, X_test2, y_test2):
