@@ -36,7 +36,7 @@ from pprint import pprint
 import time
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.metrics import cohen_kappa_score, mean_absolute_error
+from sklearn.metrics import cohen_kappa_score, mean_absolute_error, r2_score
 from sklearn.externals import joblib
 
 
@@ -72,8 +72,10 @@ rf_building = RandomForestClassifier(n_estimators=300)
 rf_building.fit(X_train, y_train)
 y_pred = rf_building.predict(X_test)
 
+print('BUILDING')
 print('Accuracy:', rf_building.score(X_test, y_test))
 print('Kappa:', cohen_kappa_score(y_pred, y_test))
+print('')
 
 #Accuracy: 0.9981998199819982
 #Kappa: 0.9971547547096364
@@ -96,16 +98,52 @@ print('FLOOR')
 print('Accuracy:', rf_floor.score(X_test, y_test))
 print('Kappa:', cohen_kappa_score(y_pred, y_test))
 
-# Without building
-#Accuracy: 0.9153915391539154
-#Kappa: 0.8816328889966893
 
-# With building
+
+# With Building
 #Accuracy: 0.9144914491449145
-#Kappa: 0.8803464053473122
+#Kappa: 0.8801900703455525
+
+
+X_train['pred_floor'] = rf_floor.predict(X_train)
+X_test['pred_floor'] = rf_floor.predict(X_test)
+
+# %% Split datasets by building
 
 
 
+
+
+# %% Predict Longitude
+
+rf_long = RandomForestRegressor(n_estimators = 500)
+
+y_train = train['LONGITUDE']
+y_test = test['LONGITUDE']
+
+rf_long.fit(X_train, y_train)
+y_pred = rf_long.predict(X_test)
+
+print('')
+print('LONGITUDE')
+print('MAE:', mean_absolute_error(y_test, y_pred))
+print('R2:', r2_score(y_test, y_pred))
+
+# All predicted the same
+#LONGITUDE
+#MAE: 6.127759205383107
+#R2: 0.9926204605263867
+
+
+# %% Predict Latitude --------------------------------------------------------
+
+rf_lat = RandomForestRegressior(n_estimators=500)
+
+y_train = train['LATITUDE']
+y_test = test['LATITUDE']
+
+
+# %% Sandbox -----------------------------------------------------------------
 
 X_train_build0 = X_train[X_train['pred_building'] == 0]
 y_train_build0 = train.loc[X_train_build0.index, 'FLOOR' ]
@@ -132,7 +170,7 @@ print('Kappa:', cohen_kappa_score(y_pred, y_test_build0))
 X_train['pred_floor'] = rf.classifier
 
 
-# %% Sandbox -----------------------------------------------------------------
+
 
 # %% Boost building score to a full 1 with only 2 observations per building/floor
 
