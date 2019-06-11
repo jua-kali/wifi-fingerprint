@@ -59,6 +59,110 @@ train sets.  Otherwise, random splits might leave us with a lot of data from
 one floor/building, and none from another.
 '''
 
+train = waps_fixed
+test = waps_random
+
+X_train = train[wap_names].copy()
+X_test = test[wap_names].copy()
+
+y_train = train['BUILDINGID']
+y_test = test['BUILDINGID']
+
+rf_building = RandomForestClassifier(n_estimators=300)
+rf_building.fit(X_train, y_train)
+y_pred = rf_building.predict(X_test)
+
+print('Accuracy:', rf_building.score(X_test, y_test))
+print('Kappa:', cohen_kappa_score(y_pred, y_test))
+
+#Accuracy: 0.9981998199819982
+#Kappa: 0.9971547547096364
+
+
+# %% Predict Floor -----------------------------------------------------------
+
+# Add building prediction to the features
+X_train['pred_building'] = rf_building.predict(X_train)
+X_test['pred_building'] = rf_building.predict(X_test)
+
+y_train = train['FLOOR']
+y_test = test['FLOOR']
+
+rf_floor = RandomForestClassifier(n_estimators=500)
+rf_floor.fit(X_train, y_train)
+y_pred = rf_floor.predict(X_test)
+
+print('FLOOR')
+print('Accuracy:', rf_floor.score(X_test, y_test))
+print('Kappa:', cohen_kappa_score(y_pred, y_test))
+
+# Without building
+#Accuracy: 0.9153915391539154
+#Kappa: 0.8816328889966893
+
+# With building
+#Accuracy: 0.9144914491449145
+#Kappa: 0.8803464053473122
+
+
+
+
+X_train_build0 = X_train[X_train['pred_building'] == 0]
+y_train_build0 = train.loc[X_train_build0.index, 'FLOOR' ]
+
+len(X_train_build0.index.unique())
+
+len(X_train.index.unique())
+len(X_train.index)
+
+X_test_build0 = X_test[X_test.pred_building == 0]
+y_test_build0 = test.loc[X_test_build0.index, 'FLOOR' ]
+
+rf_classifier = RandomForestClassifier(n_estimators=800)
+rf_classifier.fit(X_train_build0, y_train_build0)
+y_pred = rf_classifier.predict(X_test_build0)
+
+print('BUILDING 0')
+print('Accuracy:', rf_classifier.score(X_test_build0, y_test_build0))
+print('Kappa:', cohen_kappa_score(y_pred, y_test_build0))
+
+#Accuracy: 0.9981060606060606
+#Kappa: 0.9973224337454486
+
+X_train['pred_floor'] = rf.classifier
+
+
+# %% Sandbox -----------------------------------------------------------------
+
+# %% Boost building score to a full 1 with only 2 observations per building/floor
+
+waps_random_train = (waps_random.groupby(['BUILDINGID', 'FLOOR'])
+            .apply(lambda x: x.sample(n=5, random_state = RANDOM_SEED))
+            .droplevel(level = ['BUILDINGID', 'FLOOR'])
+           )
+
+train = pd.concat([waps_fixed, waps_random_train]) #.reset_index(drop=True)
+test = waps_random.drop(waps_random_train.index) #.reset_index(drop=True)
+
+X_train = train[wap_names].copy()
+X_test = test[wap_names].copy()
+
+
+y_train = train['BUILDINGID']
+y_test = test['BUILDINGID']
+
+rf_building = RandomForestClassifier(n_estimators=300)
+rf_building.fit(X_train, y_train)
+y_pred = rf_building.predict(X_test)
+
+print('BUILDINGID')
+print('Accuracy:', rf_building.score(X_test, y_test))
+print('Kappa:', cohen_kappa_score(y_pred, y_test))
+
+# %% Old train/test
+
+
+
 # Select test sample with 390 observations from each floor, building 
 # This is roughly 25% of the fixed location data
 waps_fixed_test = (waps_fixed.groupby(['BUILDINGID', 'FLOOR'])
@@ -100,8 +204,8 @@ train = waps_all.drop(test.index)
 #plot(data)
 
 
-X_train = train[wap_names]
-X_test = test[wap_names]
+X_train = train[wap_names].copy()
+X_test = test[wap_names].copy()
 
 # %% Predict Building ---------------------------------------------------------
 
@@ -113,7 +217,14 @@ rf_classifier = RandomForestClassifier(n_estimators=200)
 rf_classifier.fit(X_train, y_train)
 y_pred = rf_classifier.predict(X_test)
 
-rf_classifier.score(X_test, y_test)
-cohen_kappa_score(y_pred, y_test),
+print('Accuracy:', rf_classifier.score(X_test, y_test))
+print('Kappa:', cohen_kappa_score(y_pred, y_test))
 
 
+
+
+
+
+
+def rf_cascade():
+    
