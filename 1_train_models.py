@@ -53,11 +53,8 @@ wap_names = [col for col in waps_all if col.startswith('WAP')]
 
 
 
-''' Setup test/train sampled datasets -----------------------------------------
-It's important to sample data from each floor and building for the test and 
-train sets.  Otherwise, random splits might leave us with a lot of data from
-one floor/building, and none from another.
-'''
+# %% Setup test/train sampled datasets -----------------------------------------
+
 
 train = waps_fixed
 test = waps_random
@@ -90,7 +87,7 @@ X_test['pred_building'] = rf_building.predict(X_test)
 y_train = train['FLOOR']
 y_test = test['FLOOR']
 
-rf_floor = RandomForestClassifier(n_estimators=500)
+rf_floor = RandomForestClassifier(n_estimators=500, n_jobs = CORES)
 rf_floor.fit(X_train, y_train)
 y_pred = rf_floor.predict(X_test)
 
@@ -111,12 +108,78 @@ X_test['pred_floor'] = rf_floor.predict(X_test)
 # %% Split datasets by building
 
 
+X_train = train[wap_names].copy()
+X_test = test[wap_names].copy()
+X_train['pred_building'] = rf_building.predict(X_train)
+X_test['pred_building'] = rf_building.predict(X_test)
+#X_train['pred_floor'] = rf_floor.predict(X_train)
+#X_test['pred_floor'] = rf_floor.predict(X_test)
 
+target = 'LONGITUDE'
+
+
+
+def predict_by_building(target, train, X_train, X_test):
+    
+    all_predictions = pd.DataFrame()
+    
+    for i in [0, 1, 2]:
+        X_train_temp = X_train[X_train['pred_building'] == i]
+        y_train_temp = train.loc[X_train_temp.index, target]
+        
+    
+        X_test_temp = X_test[X_test.pred_building == i]
+        y_test_temp = test.loc[X_test_temp.index, target]
+        
+        rf_regressor = RandomForestRegressor(n_estimators=500, n_jobs = CORES)
+        rf_regressor.fit(X_train_temp, y_train_temp)
+        y_pred = rf_regressor.predict(X_test_temp)
+        
+        temp= pd.DataFrame({target: y_test_temp,
+                            'predicted': y_pred,
+                            'BUILDINGID': i})
+        
+        all_predictions = pd.concat([all_predictions, temp])
+        
+        print('')
+        print('LONGITUDE, BUILDING', i)
+        print('MAE:', mean_absolute_error(y_test_temp, y_pred))
+        print('R2:', r2_score(y_test_temp, y_pred))
+        
+    return(all_predictions)
+    
+   
+all_predictions = predict_by_building(target, train, X_train, X_test)
+
+split
+
+print('')
+print('LONGITUDE')
+print('MAE:', mean_absolute_error(all_predictions['LONGITUDE'], all_predictions['predicted']))
+print('R2:', r2_score(all_predictions['LONGITUDE'], all_predictions['predicted']))
+
+
+#LONGITUDE, BUILDING 0
+#MAE: 4.703652458498485
+#R2: 0.9199451652416797
+#
+#LONGITUDE, BUILDING 1
+#MAE: 7.186656707225823
+#R2: 0.9326206446104566
+#
+#LONGITUDE, BUILDING 2
+#MAE: 7.769591434167459
+#R2: 0.828342858348318
+
+# All together
+#LONGITUDE
+#MAE: 6.129353583465702
+#R2: 0.9926150163208298
 
 
 # %% Predict Longitude
 
-rf_long = RandomForestRegressor(n_estimators = 500)
+rf_long = RandomForestRegressor(n_estimators = 500, n_jobs = CORES)
 
 y_train = train['LONGITUDE']
 y_test = test['LONGITUDE']
@@ -135,12 +198,55 @@ print('R2:', r2_score(y_test, y_pred))
 #R2: 0.9926204605263867
 
 
-# %% Predict Latitude --------------------------------------------------------
+# %% Try without Floor
 
-rf_lat = RandomForestRegressior(n_estimators=500)
+y_train = train['LONGITUDE']
+y_test = test['LONGITUDE']
+
+rf_long = RandomForestRegressor(n_estimators = 500, n_jobs = CORES)
+
+rf_long.fit(X_train, y_train)
+y_pred = rf_long.predict(X_test)
+
+print('')
+print('LONGITUDE')
+print('MAE:', mean_absolute_error(y_test, y_pred))
+print('R2:', r2_score(y_test, y_pred))
+
+#LONGITUDE, no Floor
+#MAE: 6.093362827569391
+#R2: 0.993093258237803
+
+##LONGITUDE, no Building
+#MAE: 7.629769132508398
+#R2: 0.9885843918213203
+
+#X_train['pred_longitude'] = rf_long.predict(X_train)
+#X_test['pred_longitude'] = rf_long.predict(X_test)
+
+# %% Predict Latitude --------------------------------------------------------
 
 y_train = train['LATITUDE']
 y_test = test['LATITUDE']
+
+rf_lat = RandomForestRegressor(n_estimators = 500, n_jobs = CORES)
+
+rf_lat.fit(X_train, y_train)
+y_pred = rf_lat.predict(X_test)
+
+print('')
+print('LATITUDE')
+print('MAE:', mean_absolute_error(y_test, y_pred))
+print('R2:', r2_score(y_test, y_pred))
+
+#Latitude, no Longitude
+#MAE: 6.1746875078498675
+#R2: 0.9785037009176718
+
+#Latitude when you include longitude
+#LATITUDE
+#MAE: 6.917217421125785
+#R2: 0.9746902434308652
 
 
 # %% Sandbox -----------------------------------------------------------------
