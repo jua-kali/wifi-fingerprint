@@ -32,6 +32,8 @@ import numpy as np
 from plotly.offline import plot
 import plotly.graph_objs as go
 
+from math import sqrt
+
 from pprint import pprint
 import time
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -105,6 +107,71 @@ print('Kappa:', cohen_kappa_score(y_pred, y_test))
 X_train['pred_floor'] = rf_floor.predict(X_train)
 X_test['pred_floor'] = rf_floor.predict(X_test)
 
+
+# %% Try without Floor
+
+y_train = train['LONGITUDE']
+y_test = test['LONGITUDE']
+
+rf_long = RandomForestRegressor(n_estimators = 500, n_jobs = CORES)
+
+rf_long.fit(X_train, y_train)
+y_pred_long = rf_long.predict(X_test)
+
+print('')
+print('LONGITUDE')
+print('MAE:', mean_absolute_error(y_test, y_pred_long))
+print('R2:', r2_score(y_test, y_pred))
+
+# LONGITUDE, split
+#MAE: 5.9912873654059
+#R2: 0.9935665302798705
+
+#LONGITUDE, together
+#MAE: 6.03646695674289
+#R2: 0.9934772161275138
+
+#LONGITUDE, no Floor
+#MAE: 6.093362827569391
+#R2: 0.993093258237803
+
+##LONGITUDE, no Building
+#MAE: 7.629769132508398
+#R2: 0.9885843918213203
+
+#X_train['pred_longitude'] = rf_long.predict(X_train)
+#X_test['pred_longitude'] = rf_long.predict(X_test)
+
+# %% Predict Latitude --------------------------------------------------------
+
+y_train = train['LATITUDE']
+y_test = test['LATITUDE']
+
+rf_lat = RandomForestRegressor(n_estimators = 500, n_jobs = CORES)
+
+rf_lat.fit(X_train, y_train)
+y_pred_lat = rf_lat.predict(X_test)
+
+print('')
+print('LATITUDE')
+print('MAE:', mean_absolute_error(y_test, y_pred_lat))
+print('R2:', r2_score(y_test, y_pred))
+
+#Latitude, no Longitude
+#MAE: 6.1746875078498675
+#R2: 0.9785037009176718
+
+#LATITUDE, using Longitude
+#MAE: 6.917217421125785
+#R2: 0.9746902434308652
+
+# %% Calculate Distance Error
+
+dist = np.sqrt((test['LATITUDE'].values - y_pred_lat)**2 + (test['LONGITUDE'].values - y_pred_long)**2 )
+print('Mean total distance error:', dist.mean().round(1), 'm')
+
+# %% Sandbox -----------------------------------------------------------------
+
 # %% Split datasets by building
 
 
@@ -151,7 +218,6 @@ def predict_by_building(target, train, X_train, X_test):
    
 all_predictions = predict_by_building(target, train, X_train, X_test)
 
-split
 
 print('')
 print('LONGITUDE')
@@ -177,80 +243,8 @@ print('R2:', r2_score(all_predictions['LONGITUDE'], all_predictions['predicted']
 #R2: 0.9926150163208298
 
 
-# %% Predict Longitude
 
-rf_long = RandomForestRegressor(n_estimators = 500, n_jobs = CORES)
-
-y_train = train['LONGITUDE']
-y_test = test['LONGITUDE']
-
-rf_long.fit(X_train, y_train)
-y_pred = rf_long.predict(X_test)
-
-print('')
-print('LONGITUDE')
-print('MAE:', mean_absolute_error(y_test, y_pred))
-print('R2:', r2_score(y_test, y_pred))
-
-# All predicted the same
-#LONGITUDE
-#MAE: 6.127759205383107
-#R2: 0.9926204605263867
-
-
-# %% Try without Floor
-
-y_train = train['LONGITUDE']
-y_test = test['LONGITUDE']
-
-rf_long = RandomForestRegressor(n_estimators = 500, n_jobs = CORES)
-
-rf_long.fit(X_train, y_train)
-y_pred = rf_long.predict(X_test)
-
-print('')
-print('LONGITUDE')
-print('MAE:', mean_absolute_error(y_test, y_pred))
-print('R2:', r2_score(y_test, y_pred))
-
-#LONGITUDE, no Floor
-#MAE: 6.093362827569391
-#R2: 0.993093258237803
-
-##LONGITUDE, no Building
-#MAE: 7.629769132508398
-#R2: 0.9885843918213203
-
-#X_train['pred_longitude'] = rf_long.predict(X_train)
-#X_test['pred_longitude'] = rf_long.predict(X_test)
-
-# %% Predict Latitude --------------------------------------------------------
-
-y_train = train['LATITUDE']
-y_test = test['LATITUDE']
-
-rf_lat = RandomForestRegressor(n_estimators = 500, n_jobs = CORES)
-
-rf_lat.fit(X_train, y_train)
-y_pred = rf_lat.predict(X_test)
-
-print('')
-print('LATITUDE')
-print('MAE:', mean_absolute_error(y_test, y_pred))
-print('R2:', r2_score(y_test, y_pred))
-
-#Latitude, no Longitude
-#MAE: 6.1746875078498675
-#R2: 0.9785037009176718
-
-#Latitude when you include longitude
-#LATITUDE
-#MAE: 6.917217421125785
-#R2: 0.9746902434308652
-
-
-# %% Sandbox -----------------------------------------------------------------
-
+# Old Split
 X_train_build0 = X_train[X_train['pred_building'] == 0]
 y_train_build0 = train.loc[X_train_build0.index, 'FLOOR' ]
 
