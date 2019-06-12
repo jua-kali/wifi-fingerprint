@@ -197,6 +197,19 @@ error_summary.loc['Floor Hit Rate', 'My Model'] = floor_hit_rate.round(4)
 
 
 
+import plotly.graph_objs as go
+from plotly.offline import  plot, iplot
+import cufflinks as cf
+# You may also need
+cf.go_offline()
+
+plot(error_summary.iplot(asFigure=True,
+                   kind='bar',
+#                   xTitle='Dates',
+#                   yTitle='Quantity',
+#                   title=('Quantities for ' + shop_label)
+                   )
+    )
 
 
 counts
