@@ -39,4 +39,4 @@ Although WiFi fingerprinting is convenient because it can be implemented in norm
 * 108,703 m2 total covered indoor area
 * Signals from 520 WAPs
 * **Fixed location data:** 19,937 training records which were taken at 933 marked locations, each location has at least 20 observations of the WAP signals present.
-* **Random location data:** 1,111 validating/test records where users went to random spots in a building.  Each observation is unique, but potentially also contains errors because they rely on a user's ability to accurately mark where they are in a building when they take a WAP observation.
+* **Random location data:** 1,111 validating/test records where users went to random spots in a building.  Each observation is unique, but potentially also contains errors because they rely on a user's ability to accurately mark where they are in a building when they take a WAP observation. This dataset was recorded 4 months after the fixed location data, and there's evidence that some of the WAPs moved their positions between data sets.
