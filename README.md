@@ -7,6 +7,8 @@ This is a project I'm working on to try out new machine learning and data scienc
 
 **Status:** I've completed a baseline model to predict building, floor, latitude, and longitude. My best model has a mean error of 10.2 m, which would have roughly scored 4th in the 2015 EvAAL-ETRI Wi-Fi Fingerprinting Competition.
 
+**Current Best Approach:** Use cascading models where the prediction of one model becomes a predictor for the next.  This works best when the accuracy of an upstream models is very high such that errors don't propagate into the next models.  In this case, predicting the building for a location and then using this as a predictor for latitude and longitude improves accuracy.  This makes sense because the building prediction then contrains the possibilities for what the latitude and longitude might be. 
+
 **Upcoming  Steps:** 
 * Try out FG Lab and Sacred as ways to document model experiments and results
 * Characterize observations with the worst error
